@@ -1,0 +1,32 @@
+{
+  "name": "invoice-chatbot",
+  "version": "1.0.0",
+  "description": "A well-organized invoice chatbot using MVC pattern",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rawat107/Invoice-Chatbot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Rawat107/Invoice-Chatbot/issues"
+  },
+  "homepage": "https://github.com/Rawat107/Invoice-Chatbot#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "groq-sdk": "^0.32.0",
+    "mpath": "^0.9.0",
+    "multer": "^2.0.2",
+    "nodemon": "^3.1.10",
+    "tesseract.js": "^6.0.1"
+  }
+}
