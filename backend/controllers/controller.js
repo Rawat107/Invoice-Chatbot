@@ -1,6 +1,6 @@
-import { Invoice, sampleInvoices } from '../models/Invoice.js';
+import { Invoice, sampleInvoices } from '../../models/Invoice.js';
 import { FormatUtils, DateUtils, ResponseUtils } from '../utils/utils.js';
-import GroqService from '../services/groqService.js';
+import GroqService from '../../services/groqService.js';
 import fs from 'fs';
 
 let pdfParse = null;

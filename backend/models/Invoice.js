@@ -1,5 +1,5 @@
 // Clean Invoice model - single source of truth for data structure
-import { DateUtils, FormatUtils } from '../utils/utils.js';
+import { DateUtils, FormatUtils } from '../backend/utils/utils.js';
 
 export class Invoice {
     constructor(data) {
