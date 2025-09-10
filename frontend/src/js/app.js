@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+// Use API_BASE_URL from .env or default to localhost
 const API_BASE = process.env.API_BASE_URL || "http://localhost:3000/api";
 
 class InvoiceChatbot {
