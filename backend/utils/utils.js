@@ -1,7 +1,7 @@
 // Shared utilities to make code DRY
 export class DateUtils {
     static getCurrentDate() {
-        return new Date(2025, 8, 10); // September 10, 2025 (consistent across app)
+        return new Date(2025, 8, 10); // September 10, 2025
     }
 
     static parseDate(dateString) {

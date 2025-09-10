@@ -1,4 +1,4 @@
-// Clean Invoice model - single source of truth for data structure
+// backend/models/Invoice.js
 import { DateUtils, FormatUtils } from '../utils/utils.js';
 
 export class Invoice {

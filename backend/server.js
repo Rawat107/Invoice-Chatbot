@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 const uploadsDir = join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log('✅ Created uploads directory');
+    console.log(' Created uploads directory');
 }
 
 // Middleware

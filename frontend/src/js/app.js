@@ -14,7 +14,7 @@ class InvoiceChatbot {
     init() {
         this.bindEvents();
         this.loadInvoices();
-        console.log('✅ Invoice Chatbot initialized - Ready for any question!');
+        console.log(' Invoice Chatbot initialized - Ready for any question!');
     }
 
     bindEvents() {
@@ -29,7 +29,7 @@ class InvoiceChatbot {
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
 
-        // File upload handling - FIXED FOR DEPLOYMENT
+        // File upload handling
         uploadArea?.addEventListener('click', () => {
             console.log('Upload area clicked');
             fileInput?.click();
@@ -97,15 +97,15 @@ class InvoiceChatbot {
             const result = await response.json();
 
             if (result.success) {
-                this.showStatus(`✅ File processed: ${result.data.vendor} - ${result.data.formatted_total}`, 'success');
+                this.showStatus(` File processed: ${result.data.vendor} - ${result.data.formatted_total}`, 'success');
                 await this.loadInvoices();
-                this.addBotMessage(`📄 File uploaded successfully!\n\nVendor: ${result.data.vendor}\nInvoice: ${result.data.invoice_number}\nAmount: ${result.data.formatted_total}\nDue: ${result.data.due_date}\n\nYou can now ask me any questions about this invoice!`);
+                this.addBotMessage(` File uploaded successfully!\n\nVendor: ${result.data.vendor}\nInvoice: ${result.data.invoice_number}\nAmount: ${result.data.formatted_total}\nDue: ${result.data.due_date}\n\nYou can now ask me any questions about this invoice!`);
             } else {
-                this.showStatus('❌ Error processing file: ' + result.error, 'error');
+                this.showStatus(' Error processing file: ' + result.error, 'error');
             }
         } catch (error) {
             console.error('Upload error:', error);
-            this.showStatus('❌ Upload failed: ' + error.message, 'error');
+            this.showStatus(' Upload failed: ' + error.message, 'error');
         } finally {
             this.setProcessingState(false);
         }
@@ -122,15 +122,15 @@ class InvoiceChatbot {
             });
 
             if (result.success) {
-                this.showStatus('✅ Invoice deleted successfully', 'success');
+                this.showStatus(' Invoice deleted successfully', 'success');
                 await this.loadInvoices();
-                this.addBotMessage('🗑️ Invoice has been deleted.');
+                this.addBotMessage(' Invoice has been deleted.');
             } else {
-                this.showStatus('❌ Failed to delete invoice: ' + result.error, 'error');
+                this.showStatus(' Failed to delete invoice: ' + result.error, 'error');
             }
         } catch (error) {
             console.error('Delete error:', error);
-            this.showStatus('❌ Delete failed: ' + error.message, 'error');
+            this.showStatus(' Delete failed: ' + error.message, 'error');
         }
     }
 
@@ -143,16 +143,16 @@ class InvoiceChatbot {
             const result = await this.makeApiCall('/invoices/sample', { method: 'POST' });
 
             if (result.success) {
-                this.showStatus(`✅ Sample data loaded: ${result.data.length} invoices`, 'success');
+                this.showStatus(` Sample data loaded: ${result.data.length} invoices`, 'success');
                 await this.loadInvoices();
                 const total = result.data.reduce((sum, inv) => sum + inv.total, 0);
-                this.addBotMessage(`📊 Sample data loaded successfully!\n\nLoaded ${result.data.length} professional invoices:\n• Amazon Web Services: $2,450.00\n• Microsoft Corporation: $3,100.00\n• Google LLC: $1,850.00\n• Apple Inc.: $4,200.00\n• Tesla Inc.: $1,500.00\n\nTotal Value: $${total.toFixed(2)}\n\nNow you can ask me ANY questions about these invoices!`);
+                this.addBotMessage(` Sample data loaded successfully!\n\nLoaded ${result.data.length} professional invoices:\n• Amazon Web Services: $2,450.00\n• Microsoft Corporation: $3,100.00\n• Google LLC: $1,850.00\n• Apple Inc.: $4,200.00\n• Tesla Inc.: $1,500.00\n\nTotal Value: $${total.toFixed(2)}\n\nNow you can ask me ANY questions about these invoices!`);
             } else {
-                this.showStatus('❌ Failed to load sample data', 'error');
+                this.showStatus(' Failed to load sample data', 'error');
             }
         } catch (error) {
             console.error('Sample data error:', error);
-            this.showStatus('❌ Error loading sample data: ' + error.message, 'error');
+            this.showStatus(' Error loading sample data: ' + error.message, 'error');
         } finally {
             this.setProcessingState(false);
         }
