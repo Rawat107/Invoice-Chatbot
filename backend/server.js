@@ -31,10 +31,7 @@ app.use('/uploads', express.static('uploads'));
 // Routes
 app.use('/api', invoiceRoutes);
 
-// Serve main page
-app.get('/', (req, res) => {
-    res.sendFile(join(__dirname, 'views', 'index.html'));
-});
+app.get('/', (req, res) => res.status(200).json({ ok: true }));
 
 // Error handling middleware
 app.use((error, req, res, next) => {
