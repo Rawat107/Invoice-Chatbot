@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice Chatbot - AI-Powered Invoice Management</title>
+    <link href="./src/output.css" rel="stylesheet" />
+
+    <style>
+      /* Custom styles for animations and scrolling */
+      .message-enter {
+        animation: slideInUp 0.3s ease-out;
+      }
+
+      @keyframes slideInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-container {
+        height: calc(100vh - 240px);
+        display: flex;
+        flex-direction: column;
+        min-height: 500px;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      .chat-messages::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .chat-messages::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 3px;
+      }
+
+      .chat-messages::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+
+      .invoices-list::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .invoices-list::-webkit-scrollbar-track {
+        background: #f8fafc;
+      }
+
+      .invoices-list::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-6 py-6">
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900">Invoice Chatbot</h1>
+            <p class="text-gray-600 mt-2">
+              AI-powered invoice management with real file processing
+            </p>
+          </div>
+          <div class="text-right">
+            <div class="space-y-1">
+              <div class="text-sm font-medium text-gray-900">
+                <span id="headerInvoiceCount">0</span> invoices
+              </div>
+              <div class="text-sm text-gray-600">
+                <span id="headerTotalValue">$0.00</span> total value
+              </div>
+              <div class="text-xs text-red-600">
+                <span id="overdueCount">0</span> overdue
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-10 gap-8">
+        <!-- Left Column - Chat (70%) -->
+        <div class="lg:col-span-7">
+          <div
+            class="bg-white rounded-xl shadow-lg border border-gray-200 chat-container"
+          >
+            <!-- Chat Header -->
+            <div class="border-b border-gray-200 px-6 py-4 flex-shrink-0">
+              <h2 class="text-xl font-semibold text-gray-900">AI Assistant</h2>
+              <p class="text-sm text-gray-600 mt-1">
+                Ask me anything about your invoices - no limits!
+              </p>
+            </div>
+
+            <!-- Chat Messages -->
+            <div
+              id="chatMessages"
+              class="chat-messages p-6 space-y-4 bg-gray-50"
+            >
+              <div class="flex space-x-3">
+                <div class="flex-shrink-0">
+                  <div
+                    class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center"
+                  >
+                    <span class="text-white text-sm font-medium">AI</span>
+                  </div>
+                </div>
+                <div class="flex-1">
+                  <div
+                    class="bg-white rounded-lg px-4 py-3 shadow-sm border border-gray-200"
+                  >
+                    <p class="text-gray-800 font-medium mb-3">
+                      Welcome! I can answer ANY question about your invoices.
+                    </p>
+                    <div class="text-sm text-gray-600 space-y-2">
+                      <p><strong>Try asking:</strong></p>
+                      <div class="grid grid-cols-1 gap-2 mt-2">
+                        <div class="bg-gray-50 rounded p-2">
+                          <p class="font-medium text-gray-700">
+                            Natural Questions:
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            "Give me vendor names with invoices above 2000"
+                          </p>
+                        </div>
+                        <div class="bg-gray-50 rounded p-2">
+                          <p class="font-medium text-gray-700">
+                            Complex Queries:
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            "Which companies owe us money and when?"
+                          </p>
+                        </div>
+                        <div class="bg-gray-50 rounded p-2">
+                          <p class="font-medium text-gray-700">Analytics:</p>
+                          <p class="text-xs text-gray-500">
+                            "Show me spending patterns by vendor"
+                          </p>
+                        </div>
+                        <div class="bg-gray-50 rounded p-2">
+                          <p class="font-medium text-gray-700">
+                            Anything Else:
+                          </p>
+                          <p class="text-xs text-gray-500">
+                            Ask about totals, dates, items, statistics...
+                          </p>
+                        </div>
+                      </div>
+                      <p class="mt-3 text-xs text-gray-500 italic">
+                        Note: I focus on invoice-related questions only.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div
+              class="border-t border-gray-200 px-6 py-4 bg-white flex-shrink-0 rounded-b-xl"
+            >
+              <div class="flex space-x-3">
+                <input
+                  type="text"
+                  id="chatInput"
+                  placeholder="Ask me anything about your invoices..."
+                  class="flex-1 block w-full rounded-lg border border-gray-300 px-4 py-3 text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                />
+                <button
+                  id="sendBtn"
+                  class="inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span class="hidden sm:inline">Send</span>
+                  <svg
+                    class="w-4 h-4 sm:hidden"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column (30%) -->
+        <div class="lg:col-span-3 space-y-6">
+          <!-- Upload Section -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900">
+                Upload Invoices
+              </h3>
+              <p class="text-sm text-gray-600 mt-1">
+                Multiple ways to add invoices
+              </p>
+            </div>
+            <div class="p-6 space-y-4">
+              <!-- File Upload Area -->
+              <div
+                id="uploadArea"
+                class="relative border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-all duration-200 cursor-pointer group bg-gray-50 hover:bg-gray-100"
+              >
+                <div class="space-y-3">
+                  <svg
+                    class="w-12 h-12 text-gray-400 mx-auto group-hover:text-blue-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <div>
+                    <p class="text-gray-700 font-medium">Upload Invoice File</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      PDF, PNG, JPG up to 10MB
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">
+                      Drag & drop or click to browse
+                    </p>
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  id="fileInput"
+                  accept="image/*,.pdf"
+                  class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </div>
+
+              <!-- URL Input -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-700"
+                  >Or paste invoice URL:</label
+                >
+                <div class="flex space-x-2">
+                  <input
+                    type="url"
+                    id="urlInput"
+                    placeholder="https://example.com/invoice.pdf"
+                    class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                  />
+                  <button
+                    id="urlBtn"
+                    class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Process
+                  </button>
+                </div>
+              </div>
+
+              <!-- Divider -->
+              <div class="relative">
+                <div class="absolute inset-0 flex items-center">
+                  <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center">
+                  <span class="px-3 bg-white text-sm text-gray-500">or</span>
+                </div>
+              </div>
+
+              <!-- Load Sample Data Button -->
+              <button
+                id="loadSampleBtn"
+                class="w-full inline-flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                <svg
+                  class="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Load Sample Data (5 invoices)
+              </button>
+
+              <!-- Status Messages -->
+              <div id="uploadStatus" class="hidden"></div>
+            </div>
+          </div>
+
+          <!-- Current Invoices Section -->
+          <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+            <div
+              class="px-6 py-4 border-b border-gray-200 flex items-center justify-between"
+            >
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">
+                  Current Invoices
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">
+                  Recent invoices and their status
+                </p>
+              </div>
+              <button
+                id="refreshBtn"
+                class="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div
+              id="invoicesList"
+              class="invoices-list max-h-96 overflow-y-auto"
+            >
+              <div class="p-8 text-center text-gray-500">
+                <svg
+                  class="w-16 h-16 mx-auto text-gray-300 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <p class="text-sm font-medium text-gray-700">
+                  No invoices loaded
+                </p>
+                <p class="text-xs text-gray-500 mt-2">
+                  Upload files or load sample data to get started
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+      <div class="max-w-7xl mx-auto px-6 py-6">
+        <div
+          class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0"
+        >
+          <div class="text-center sm:text-left">
+            <p class="text-sm font-medium text-gray-700">Invoice Chatbot</p>
+            <p class="text-xs text-gray-500">
+              AI-Powered Invoice Management - Ask Anything!
+            </p>
+          </div>
+          <div class="flex items-center space-x-6 text-xs text-gray-500">
+            <span>Real File Processing</span>
+            <span>•</span>
+            <span>Enhanced AI</span>
+            <span>•</span>
+            <span>URL Support</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="src/js/app.js"></script>
+  </body>
+</html>
