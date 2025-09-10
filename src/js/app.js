@@ -26,22 +26,31 @@ class InvoiceChatbot {
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
 
-        uploadArea?.addEventListener('click', () => fileInput?.click());
+        // File upload handling - FIXED FOR DEPLOYMENT
+        uploadArea?.addEventListener('click', () => {
+            console.log('Upload area clicked');
+            fileInput?.click();
+        });
+
         fileInput?.addEventListener('change', (e) => {
+            console.log('File input changed');
             if (e.target.files[0]) {
                 this.handleFileUpload(e.target.files[0]);
                 e.target.value = '';
             }
         });
 
+        // Drag and drop handlers
         uploadArea?.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('border-blue-500', 'bg-blue-50');
         });
+
         uploadArea?.addEventListener('dragleave', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('border-blue-500', 'bg-blue-50');
         });
+
         uploadArea?.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('border-blue-500', 'bg-blue-50');
@@ -50,7 +59,6 @@ class InvoiceChatbot {
             }
         });
 
-        document.getElementById('urlBtn')?.addEventListener('click', () => this.handleUrlUpload());
         document.getElementById('loadSampleBtn')?.addEventListener('click', () => this.loadSampleData());
         document.getElementById('refreshBtn')?.addEventListener('click', () => this.loadInvoices());
     }
@@ -71,6 +79,7 @@ class InvoiceChatbot {
     async handleFileUpload(file) {
         if (this.isProcessing) return;
 
+        console.log('Starting file upload:', file.name);
         this.setProcessingState(true, 'Processing file upload...');
 
         const formData = new FormData();
@@ -81,53 +90,44 @@ class InvoiceChatbot {
                 method: 'POST',
                 body: formData
             });
+
             const result = await response.json();
 
             if (result.success) {
-                this.showStatus(`File processed: ${result.data.vendor} - ${result.data.formatted_total}`, 'success');
+                this.showStatus(`✅ File processed: ${result.data.vendor} - ${result.data.formatted_total}`, 'success');
                 await this.loadInvoices();
                 this.addBotMessage(`📄 File uploaded successfully!\n\nVendor: ${result.data.vendor}\nInvoice: ${result.data.invoice_number}\nAmount: ${result.data.formatted_total}\nDue: ${result.data.due_date}\n\nYou can now ask me any questions about this invoice!`);
             } else {
-                this.showStatus('Error processing file: ' + result.error, 'error');
+                this.showStatus('❌ Error processing file: ' + result.error, 'error');
             }
         } catch (error) {
-            this.showStatus('Upload failed: ' + error.message, 'error');
+            console.error('Upload error:', error);
+            this.showStatus('❌ Upload failed: ' + error.message, 'error');
         } finally {
             this.setProcessingState(false);
         }
     }
 
-    async handleUrlUpload() {
-        const urlInput = document.getElementById('urlInput');
-        const url = urlInput?.value?.trim();
-
-        if (!url) {
-            this.showStatus('Please enter a valid URL', 'error');
+    async deleteInvoice(invoiceId) {
+        if (!confirm('Are you sure you want to delete this invoice?')) {
             return;
         }
 
-        if (this.isProcessing) return;
-
-        this.setProcessingState(true, 'Processing URL...');
-
         try {
-            const result = await this.makeApiCall('/invoices/upload', {
-                method: 'POST',
-                body: JSON.stringify({ url: url })
+            const result = await this.makeApiCall(`/invoices/${invoiceId}`, {
+                method: 'DELETE'
             });
 
             if (result.success) {
-                this.showStatus(`URL processed: ${result.data.vendor} - ${result.data.formatted_total}`, 'success');
+                this.showStatus('✅ Invoice deleted successfully', 'success');
                 await this.loadInvoices();
-                this.addBotMessage(`🌐 URL processed successfully!\n\nVendor: ${result.data.vendor}\nAmount: ${result.data.formatted_total}\n\nYou can now ask me any questions about this invoice!`);
-                urlInput.value = '';
+                this.addBotMessage('🗑️ Invoice has been deleted.');
             } else {
-                this.showStatus('Error processing URL: ' + result.error, 'error');
+                this.showStatus('❌ Failed to delete invoice: ' + result.error, 'error');
             }
         } catch (error) {
-            this.showStatus('URL processing failed: ' + error.message, 'error');
-        } finally {
-            this.setProcessingState(false);
+            console.error('Delete error:', error);
+            this.showStatus('❌ Delete failed: ' + error.message, 'error');
         }
     }
 
@@ -140,15 +140,16 @@ class InvoiceChatbot {
             const result = await this.makeApiCall('/invoices/sample', { method: 'POST' });
 
             if (result.success) {
-                this.showStatus(`Sample data loaded: ${result.data.length} invoices`, 'success');
+                this.showStatus(`✅ Sample data loaded: ${result.data.length} invoices`, 'success');
                 await this.loadInvoices();
                 const total = result.data.reduce((sum, inv) => sum + inv.total, 0);
                 this.addBotMessage(`📊 Sample data loaded successfully!\n\nLoaded ${result.data.length} professional invoices:\n• Amazon Web Services: $2,450.00\n• Microsoft Corporation: $3,100.00\n• Google LLC: $1,850.00\n• Apple Inc.: $4,200.00\n• Tesla Inc.: $1,500.00\n\nTotal Value: $${total.toFixed(2)}\n\nNow you can ask me ANY questions about these invoices!`);
             } else {
-                this.showStatus('Failed to load sample data', 'error');
+                this.showStatus('❌ Failed to load sample data', 'error');
             }
         } catch (error) {
-            this.showStatus('Error loading sample data: ' + error.message, 'error');
+            console.error('Sample data error:', error);
+            this.showStatus('❌ Error loading sample data: ' + error.message, 'error');
         } finally {
             this.setProcessingState(false);
         }
@@ -185,6 +186,7 @@ class InvoiceChatbot {
             }, 800);
 
         } catch (error) {
+            console.error('Chat error:', error);
             this.showTypingIndicator(false);
             this.addBotMessage('I encountered an error processing your question. Please try again.');
             this.setProcessingState(false);
@@ -206,6 +208,7 @@ class InvoiceChatbot {
         this.updateHeaderStats();
     }
 
+    // INVOICE LIST WITH DELETE BUTTON IN TOP LEFT
     updateInvoicesList() {
         const invoicesList = document.getElementById('invoicesList');
         if (!invoicesList) return;
@@ -217,7 +220,7 @@ class InvoiceChatbot {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                     <p class="text-sm font-medium text-gray-700">No invoices loaded</p>
-                    <p class="text-xs text-gray-500 mt-2">Upload files, paste URLs, or load sample data</p>
+                    <p class="text-xs text-gray-500 mt-2">Upload files or load sample data</p>
                 </div>
             `;
             return;
@@ -226,23 +229,37 @@ class InvoiceChatbot {
         invoicesList.innerHTML = this.invoices.map(invoice => {
             const statusInfo = this.getInvoiceStatus(invoice);
             return `
-                <div class="px-6 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center justify-between">
-                        <div class="flex-1 min-w-0">
-                            <p class="text-sm font-semibold text-gray-900 truncate">${this.escapeHtml(invoice.vendor)}</p>
-                            <div class="flex items-center mt-2 space-x-3">
-                                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${this.escapeHtml(invoice.invoice_number)}</span>
-                                <span class="text-xs px-2 py-1 rounded border ${statusInfo.class}">${statusInfo.text}</span>
+                <div class="relative px-6 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors">
+                    <!-- DELETE BUTTON - Top Left X -->
+                    <button 
+                        onclick="window.invoiceChatbot?.deleteInvoice('${invoice.id}')"
+                        class="absolute top-2 left-2 w-6 h-6 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full flex items-center justify-center transition-colors z-10"
+                        title="Delete invoice"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+
+                    <!-- INVOICE CONTENT - Left padding for delete button -->
+                    <div class="pl-8">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-gray-900 truncate">${this.escapeHtml(invoice.vendor)}</p>
+                                <div class="flex items-center mt-2 space-x-3">
+                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">${this.escapeHtml(invoice.invoice_number)}</span>
+                                    <span class="text-xs px-2 py-1 rounded border ${statusInfo.class}">${statusInfo.text}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Due: ${invoice.due_date}</p>
+                                ${invoice.items && invoice.items.length > 0 ? 
+                                    `<p class="text-xs text-gray-400 mt-1">Items: ${invoice.items.slice(0, 2).join(', ')}${invoice.items.length > 2 ? '...' : ''}</p>` : 
+                                    ''
+                                }
                             </div>
-                            <p class="text-xs text-gray-500 mt-2">Due: ${invoice.due_date}</p>
-                            ${invoice.items && invoice.items.length > 0 ? 
-                                `<p class="text-xs text-gray-400 mt-1">Items: ${invoice.items.slice(0, 2).join(', ')}${invoice.items.length > 2 ? '...' : ''}</p>` : 
-                                ''
-                            }
-                        </div>
-                        <div class="text-right ml-4">
-                            <p class="text-lg font-bold text-gray-900">${invoice.formatted_total}</p>
-                            <p class="text-xs text-gray-500">Invoice Total</p>
+                            <div class="text-right ml-4">
+                                <p class="text-lg font-bold text-gray-900">${invoice.formatted_total}</p>
+                                <p class="text-xs text-gray-500">Invoice Total</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -280,13 +297,8 @@ class InvoiceChatbot {
         if (element) element.textContent = content;
     }
 
-    addUserMessage(message) {
-        this.addMessage(message, true);
-    }
-
-    addBotMessage(message) {
-        this.addMessage(message, false);
-    }
+    addUserMessage(message) { this.addMessage(message, true); }
+    addBotMessage(message) { this.addMessage(message, false); }
 
     addMessage(message, isUser = false) {
         const chatMessages = document.getElementById('chatMessages');
@@ -322,15 +334,14 @@ class InvoiceChatbot {
         this.scrollChatToBottom();
     }
 
-
     setProcessingState(isProcessing, statusMessage = '') {
         this.isProcessing = isProcessing;
 
         const sendBtn = document.getElementById('sendBtn');
         const chatInput = document.getElementById('chatInput');
-        const urlBtn = document.getElementById('urlBtn');
+        const fileInput = document.getElementById('fileInput');
 
-        [sendBtn, urlBtn].forEach(btn => {
+        [sendBtn].forEach(btn => {
             if (btn) {
                 btn.disabled = isProcessing;
                 if (isProcessing && btn === sendBtn) {
@@ -342,6 +353,8 @@ class InvoiceChatbot {
         });
 
         if (chatInput) chatInput.disabled = isProcessing;
+        if (fileInput) fileInput.disabled = isProcessing;
+
         if (statusMessage) this.showStatus(statusMessage, 'info');
     }
 
@@ -407,16 +420,14 @@ class InvoiceChatbot {
     escapeHtml(text) {
         if (!text) return '';
         const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, (m) => map[m]);
     }
 }
 
+// Make instance globally available for delete buttons
 document.addEventListener('DOMContentLoaded', () => {
-    new InvoiceChatbot();
+    const chatbot = new InvoiceChatbot();
+    window.invoiceChatbot = chatbot;
 });

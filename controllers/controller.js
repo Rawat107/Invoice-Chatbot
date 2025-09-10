@@ -38,23 +38,40 @@ class InvoiceController extends BaseController {
 
     async uploadInvoice(req, res) {
         try {
-            let invoiceData;
-
-            if (req.file) {
-                invoiceData = await this.parseInvoiceFile(req.file);
-            } else if (req.body.url) {
-                invoiceData = await this.parseInvoiceUrl(req.body.url);
-            } else {
-                return res.status(400).json(ResponseUtils.createErrorResponse('No file or URL provided'));
+            if (!req.file) {
+                return res.status(400).json(ResponseUtils.createErrorResponse('No file provided'));
             }
 
+            const invoiceData = await this.parseInvoiceFile(req.file);
             const invoice = new Invoice(invoiceData);
             invoices.push(invoice);
-            console.log('Invoice added, total count:', invoices.length);
 
+            console.log('Invoice added, total count:', invoices.length);
             res.json(ResponseUtils.createSuccessResponse('Invoice processed successfully', invoice.getDisplayData()));
         } catch (error) {
             this.handleError(res, error, 'Failed to process invoice');
+        }
+    }
+
+    async deleteInvoice(req, res) {
+        try {
+            const { id } = req.params;
+
+            if (!id) {
+                return res.status(400).json(ResponseUtils.createErrorResponse('Invoice ID is required'));
+            }
+
+            const initialCount = invoices.length;
+            invoices = invoices.filter(inv => inv.id !== id);
+
+            if (invoices.length === initialCount) {
+                return res.status(404).json(ResponseUtils.createErrorResponse('Invoice not found'));
+            }
+
+            console.log(`Invoice ${id} deleted. Remaining count:`, invoices.length);
+            res.json(ResponseUtils.createSuccessResponse('Invoice deleted successfully'));
+        } catch (error) {
+            this.handleError(res, error, 'Failed to delete invoice');
         }
     }
 
@@ -86,16 +103,6 @@ class InvoiceController extends BaseController {
         } catch (error) {
             console.warn('Parse error, falling back to filename:', error.message);
             return this.extractInvoiceData(file.originalname, file.originalname);
-        }
-    }
-
-    async parseInvoiceUrl(url) {
-        try {
-            const fileName = url.split('/').pop() || 'invoice.pdf';
-            console.log('Processing URL:', fileName);
-            return this.extractInvoiceData(fileName, fileName);
-        } catch (error) {
-            throw new Error(`Failed to process URL: ${error.message}`);
         }
     }
 
@@ -161,7 +168,7 @@ class InvoiceController extends BaseController {
         for (let i = 0; i < Math.min(10, lines.length); i++) {
             const line = lines[i].trim();
             if (line.length > 5 && 
-                !line.match(/invoice|bill|tax|date|order|phone|address|email/i) &&
+                !line.match(/invoice|bill|tax|date|order|phone|address|email/i) && 
                 line.match(/[a-zA-Z]/)) {
                 return line.replace(/[^a-zA-Z0-9\s]/g, '').trim();
             }

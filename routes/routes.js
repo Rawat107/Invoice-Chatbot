@@ -12,7 +12,7 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Configure multer for file uploads (only when needed)
+// Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadsDir),
     filename: (req, file, cb) => {
@@ -26,9 +26,9 @@ const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
     fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|pdf|webp/;
+        const allowedTypes = /jpeg|jpg|png|pdf|webp|gif|bmp/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        const mimetype = allowedTypes.test(file.mimetype) || file.mimetype.startsWith('image/');
 
         if (mimetype && extname) {
             cb(null, true);
@@ -41,17 +41,13 @@ const upload = multer({
 // Invoice routes
 router.get('/invoices', controller.invoice.getAllInvoices.bind(controller.invoice));
 
-// Multiple upload methods - file, URL, or base64
-router.post('/invoices/upload', (req, res, next) => {
-    // Check if it's a multipart form (file upload)
-    if (req.is('multipart/form-data')) {
-        upload.single('invoice')(req, res, next);
-    } else {
-        // Handle JSON data (URL or base64)
-        next();
-    }
-}, controller.invoice.uploadInvoice.bind(controller.invoice));
+// File upload only - URL removed
+router.post('/invoices/upload', upload.single('invoice'), controller.invoice.uploadInvoice.bind(controller.invoice));
 
+// Delete invoice route
+router.delete('/invoices/:id', controller.invoice.deleteInvoice.bind(controller.invoice));
+
+// Sample data route
 router.post('/invoices/sample', controller.invoice.loadSampleData.bind(controller.invoice));
 
 // Chat routes
