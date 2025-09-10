@@ -1,8 +1,7 @@
-import dotenv from 'dotenv';
-dotenv.config();
+// app.js
 
-//
-const API_BASE = process.env.API_BASE_URL || "http://localhost:3000/api";
+// Main JavaScript for Invoice Chatbot frontend
+const API_BASE = window.ENV.API_BASE_URL || "http://localhost:3000/api";
 
 class InvoiceChatbot {
     constructor() {
