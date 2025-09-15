@@ -10,39 +10,49 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Create uploads directory if it doesn't exist
 const uploadsDir = join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-    console.log(' Created uploads directory');
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL 
+    : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  credentials: true
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
-// Routes
-app.use('/api', invoiceRoutes);
-
-app.get('/', (req, res) => res.status(200).json({ ok: true }));
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-    console.error('Server error:', error);
-    res.status(500).json({ 
-        success: false, 
-        error: 'Internal server error: ' + error.message 
-    });
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    message: 'Invoice AI Running',
+    timestamp: new Date().toISOString(),
+    ai_enabled: !!process.env.OPENAI_API_KEY,
+    model: 'OpenAI GPT-4'
+  });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(` Upload directory: ${uploadsDir}`);
+app.use('/api', invoiceRoutes);
+
+app.use((error, req, res, next) => {
+  console.error('Server error:', error);
+  res.status(500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' ? 'Server error' : error.message
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Invoice AI Server`);
+  console.log(`Running on http://localhost:${PORT}`);
+  console.log(`OpenAI: ${process.env.OPENAI_API_KEY ? 'ENABLED' : 'DISABLED'}`);
+  console.log(`Uploads: ${uploadsDir}`);
 });
