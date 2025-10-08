@@ -3,7 +3,7 @@
 AI-assisted invoice parser and Q\&A app. Backend exposes REST APIs for uploading invoices (PDF/Images) and analytics; frontend is a static HTML/JS UI styled via Tailwind CLI. Designed with a simple MVC structure and ready for separate deployment of API and static site.
 
 ## Live Link
-https://invoice-chatbot-1.onrender.com/
+https://invoice-chatbot-mocha.vercel.app/
 
 ## Features
 
@@ -98,4 +98,5 @@ Tailwind CLI notes:
 ## License
 
 ISC
+
 
